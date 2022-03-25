@@ -34,8 +34,14 @@ func (dsmst *DeepSparseMerkleSubTree) AddBranch(proof SparseMerkleProof, key []b
 	}
 
 	if !bytes.Equal(value, defaultValue) { // Membership proof.
-		if err := dsmst.values.Set(dsmst.th.path(key), value); err != nil {
-			return err
+		if dsmst.values.Immutable() {
+			if err := dsmst.values.SetForRoot(dsmst.th.path(key), dsmst.root, value); err != nil {
+				return err
+			}
+		} else {
+			if err := dsmst.values.Set(dsmst.th.path(key), value); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -86,7 +92,13 @@ func (smt *SparseMerkleTree) GetDescend(key []byte) ([]byte, error) {
 				return defaultValue, nil
 			}
 			// Otherwise, yes. Return the value.
-			value, err := smt.values.Get(path)
+			var value []byte
+			var err error
+			if smt.values.Immutable() {
+				value, err = smt.values.GetForRoot(path, smt.root)
+			} else {
+				value, err = smt.values.Get(path)
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -109,7 +121,13 @@ func (smt *SparseMerkleTree) GetDescend(key []byte) ([]byte, error) {
 	// The following lines of code should only be reached if the path is 256
 	// nodes high, which should be very unlikely if the underlying hash function
 	// is collision-resistant.
-	value, err := smt.values.Get(path)
+	var value []byte
+	var err error
+	if smt.values.Immutable() {
+		value, err = smt.values.GetForRoot(path, smt.root)
+	} else {
+		value, err = smt.values.Get(path)
+	}
 	if err != nil {
 		return nil, err
 	}

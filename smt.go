@@ -17,9 +17,10 @@ var errKeyAlreadyEmpty = errors.New("key already empty")
 
 // SparseMerkleTree is a Sparse Merkle tree.
 type SparseMerkleTree struct {
-	th            treeHasher
-	nodes, values MapStore
-	root          []byte
+	th     treeHasher
+	nodes  MapStore
+	values SmtValueStore
+	root   []byte
 }
 
 // NewSparseMerkleTree creates a new Sparse Merkle tree on an empty MapStore.
@@ -27,7 +28,7 @@ func NewSparseMerkleTree(nodes, values MapStore, hasher hash.Hash, options ...Op
 	smt := SparseMerkleTree{
 		th:     *newTreeHasher(hasher),
 		nodes:  nodes,
-		values: values,
+		values: NewSmtValueStore(values),
 	}
 
 	for _, option := range options {
@@ -44,7 +45,7 @@ func ImportSparseMerkleTree(nodes, values MapStore, hasher hash.Hash, root []byt
 	smt := SparseMerkleTree{
 		th:     *newTreeHasher(hasher),
 		nodes:  nodes,
-		values: values,
+		values: NewSmtValueStore(values),
 		root:   root,
 	}
 	return &smt
@@ -75,8 +76,13 @@ func (smt *SparseMerkleTree) Get(key []byte) ([]byte, error) {
 	}
 
 	path := smt.th.path(key)
-	value, err := smt.values.Get(path)
-
+	var value []byte
+	var err error
+	if smt.values.Immutable() {
+		value, err = smt.values.GetForRoot(path, smt.root)
+	} else {
+		value, err = smt.values.Get(path)
+	}
 	if err != nil {
 		var invalidKeyError *InvalidKeyError
 
@@ -129,8 +135,10 @@ func (smt *SparseMerkleTree) UpdateForRoot(key []byte, value []byte, root []byte
 			// This key is already empty; return the old root.
 			return root, nil
 		}
-		if err := smt.values.Delete(path); err != nil {
-			return nil, err
+		if !smt.values.Immutable() {
+			if err := smt.values.Delete(path); err != nil {
+				return nil, err
+			}
 		}
 
 	} else {
@@ -256,8 +264,10 @@ func (smt *SparseMerkleTree) updateWithSideNodes(path []byte, value []byte, side
 		if err := smt.nodes.Delete(pathNodes[0]); err != nil {
 			return nil, err
 		}
-		if err := smt.values.Delete(path); err != nil {
-			return nil, err
+		if !smt.values.Immutable() {
+			if err := smt.values.Delete(path); err != nil {
+				return nil, err
+			}
 		}
 	}
 	// All remaining path nodes are orphaned
@@ -299,8 +309,14 @@ func (smt *SparseMerkleTree) updateWithSideNodes(path []byte, value []byte, side
 		}
 		currentData = currentHash
 	}
-	if err := smt.values.Set(path, value); err != nil {
-		return nil, err
+	if smt.values.Immutable() {
+		if err := smt.values.SetForRoot(path, smt.root, value); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := smt.values.Set(path, value); err != nil {
+			return nil, err
+		}
 	}
 
 	return currentHash, nil

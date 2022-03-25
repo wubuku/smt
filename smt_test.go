@@ -10,7 +10,9 @@ import (
 
 // Test base case tree update operations with a few keys.
 func TestSparseMerkleTreeUpdateBasic(t *testing.T) {
-	smn, smv := NewSimpleMap(), NewSimpleMap()
+	smn := NewSimpleMap()
+	//smv := NewSimpleMap()
+	smv := NewSimpleSmtValueMap()
 	smt := NewSparseMerkleTree(smn, smv, sha256.New())
 	var value []byte
 	var has bool

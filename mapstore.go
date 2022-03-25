@@ -55,3 +55,73 @@ func (sm *SimpleMap) Delete(key []byte) error {
 	}
 	return &InvalidKeyError{Key: key}
 }
+
+type SmtValueStore interface {
+	MapStore
+	Immutable() bool
+	GetForRoot(key []byte, smtRoot []byte) ([]byte, error)     // Get gets the value for a key.
+	SetForRoot(key []byte, smtRoot []byte, value []byte) error // Set updates the value for a key.
+}
+
+func NewSmtValueStore(mapStore MapStore) SmtValueStore {
+	svm, b := mapStore.(SmtValueStore)
+	if b {
+		return svm
+	} else {
+		return &MapStoreSmtValueStoreWrapper{
+			mapStore: mapStore,
+		}
+	}
+}
+
+type MapStoreSmtValueStoreWrapper struct {
+	mapStore MapStore
+}
+
+func (sm *MapStoreSmtValueStoreWrapper) Get(key []byte) ([]byte, error) {
+	return sm.mapStore.Get(key)
+}
+
+// Set updates the value for a key.
+func (sm *MapStoreSmtValueStoreWrapper) Set(key []byte, value []byte) error {
+	return sm.mapStore.Set(key, value)
+}
+
+// Delete deletes a key.
+func (sm *MapStoreSmtValueStoreWrapper) Delete(key []byte) error {
+	return sm.mapStore.Delete(key)
+}
+
+func (sm *MapStoreSmtValueStoreWrapper) Immutable() bool {
+	return false
+}
+
+func (sm *MapStoreSmtValueStoreWrapper) GetForRoot(key []byte, smtRoot []byte) ([]byte, error) {
+	return nil, fmt.Errorf("not implemented GetForRoot")
+}
+
+func (sm *MapStoreSmtValueStoreWrapper) SetForRoot(key []byte, smtRoot []byte, value []byte) error {
+	return fmt.Errorf("not implemented SetForRoot")
+}
+
+type SimpleSmtValueStore struct {
+	SimpleMap
+}
+
+func NewSimpleSmtValueMap() *SimpleSmtValueStore {
+	svm := SimpleSmtValueStore{}
+	svm.m = make(map[string][]byte)
+	return &svm
+}
+
+func (sm *SimpleSmtValueStore) Immutable() bool {
+	return false
+}
+
+func (sm *SimpleSmtValueStore) GetForRoot(key []byte, smtRoot []byte) ([]byte, error) {
+	return nil, fmt.Errorf("not implemented GetForRoot")
+}
+
+func (sm *SimpleSmtValueStore) SetForRoot(key []byte, smtRoot []byte, value []byte) error {
+	return fmt.Errorf("not implemented SetForRoot")
+}
