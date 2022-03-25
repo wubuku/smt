@@ -3,6 +3,7 @@ package smt
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"hash"
 )
 
@@ -35,7 +36,8 @@ func (dsmst *DeepSparseMerkleSubTree) AddBranch(proof SparseMerkleProof, key []b
 
 	if !bytes.Equal(value, defaultValue) { // Membership proof.
 		if dsmst.values.Immutable() {
-			if err := dsmst.values.SetForRoot(dsmst.th.path(key), dsmst.root, value); err != nil {
+			valueHash := dsmst.th.digest(value)
+			if err := dsmst.values.SetForValueHash(dsmst.th.path(key), valueHash, value); err != nil {
 				return err
 			}
 		} else {
@@ -86,7 +88,7 @@ func (smt *SparseMerkleTree) GetDescend(key []byte) ([]byte, error) {
 			return nil, err
 		} else if smt.th.isLeaf(currentData) {
 			// We've reached the end. Is this the actual leaf?
-			p, _ := smt.th.parseLeaf(currentData)
+			p, valueHash := smt.th.parseLeaf(currentData)
 			if !bytes.Equal(path, p) {
 				// Nope. Therefore the key is actually empty.
 				return defaultValue, nil
@@ -95,7 +97,7 @@ func (smt *SparseMerkleTree) GetDescend(key []byte) ([]byte, error) {
 			var value []byte
 			var err error
 			if smt.values.Immutable() {
-				value, err = smt.values.GetForRoot(path, smt.root)
+				value, err = smt.values.GetForValueHash(path, valueHash)
 			} else {
 				value, err = smt.values.Get(path)
 			}
@@ -124,7 +126,8 @@ func (smt *SparseMerkleTree) GetDescend(key []byte) ([]byte, error) {
 	var value []byte
 	var err error
 	if smt.values.Immutable() {
-		value, err = smt.values.GetForRoot(path, smt.root)
+		//value, err = smt.values.GetForValueHash(path, "...")
+		return nil, fmt.Errorf("not implemented, SMT values can only GetForValueHash")
 	} else {
 		value, err = smt.values.Get(path)
 	}

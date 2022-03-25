@@ -59,8 +59,8 @@ func (sm *SimpleMap) Delete(key []byte) error {
 type SmtValueStore interface {
 	MapStore
 	Immutable() bool
-	GetForRoot(key []byte, smtRoot []byte) ([]byte, error)     // Get gets the value for a key.
-	SetForRoot(key []byte, smtRoot []byte, value []byte) error // Set updates the value for a key.
+	GetForValueHash(key []byte, valueHash []byte) ([]byte, error)     // Get gets the value for a key.
+	SetForValueHash(key []byte, valueHash []byte, value []byte) error // Set updates the value for a key.
 }
 
 func NewSmtValueStore(mapStore MapStore) SmtValueStore {
@@ -96,12 +96,12 @@ func (sm *MapStoreSmtValueStoreWrapper) Immutable() bool {
 	return false
 }
 
-func (sm *MapStoreSmtValueStoreWrapper) GetForRoot(key []byte, smtRoot []byte) ([]byte, error) {
-	return nil, fmt.Errorf("not implemented GetForRoot")
+func (sm *MapStoreSmtValueStoreWrapper) GetForValueHash(key []byte, valueHash []byte) ([]byte, error) {
+	return nil, fmt.Errorf("not implemented GetForValueHash")
 }
 
-func (sm *MapStoreSmtValueStoreWrapper) SetForRoot(key []byte, smtRoot []byte, value []byte) error {
-	return fmt.Errorf("not implemented SetForRoot")
+func (sm *MapStoreSmtValueStoreWrapper) SetForValueHash(key []byte, valueHash []byte, value []byte) error {
+	return fmt.Errorf("not implemented SetForValueHash")
 }
 
 type SimpleSmtValueStore struct {
@@ -118,10 +118,10 @@ func (sm *SimpleSmtValueStore) Immutable() bool {
 	return false
 }
 
-func (sm *SimpleSmtValueStore) GetForRoot(key []byte, smtRoot []byte) ([]byte, error) {
-	return nil, fmt.Errorf("not implemented GetForRoot")
+func (sm *SimpleSmtValueStore) GetForValueHash(key []byte, valueHash []byte) ([]byte, error) {
+	return nil, fmt.Errorf("not implemented GetForValueHash")
 }
 
-func (sm *SimpleSmtValueStore) SetForRoot(key []byte, smtRoot []byte, value []byte) error {
-	return fmt.Errorf("not implemented SetForRoot")
+func (sm *SimpleSmtValueStore) SetValueHash(key []byte, valueHash []byte, value []byte) error {
+	return fmt.Errorf("not implemented SetValueHash")
 }

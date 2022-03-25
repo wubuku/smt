@@ -4,6 +4,7 @@ package smt
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"hash"
 )
 
@@ -79,7 +80,8 @@ func (smt *SparseMerkleTree) Get(key []byte) ([]byte, error) {
 	var value []byte
 	var err error
 	if smt.values.Immutable() {
-		value, err = smt.values.GetForRoot(path, smt.root)
+		//value, err = smt.values.GetForValueHash(path, "...")
+		return nil, fmt.Errorf("not implemented, SMT values can only GetForValueHash")
 	} else {
 		value, err = smt.values.Get(path)
 	}
@@ -310,7 +312,7 @@ func (smt *SparseMerkleTree) updateWithSideNodes(path []byte, value []byte, side
 		currentData = currentHash
 	}
 	if smt.values.Immutable() {
-		if err := smt.values.SetForRoot(path, smt.root, value); err != nil {
+		if err := smt.values.SetForValueHash(path, valueHash, value); err != nil {
 			return nil, err
 		}
 	} else {
