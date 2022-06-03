@@ -14,6 +14,10 @@ type SparseMerkleProof struct {
 	// NonMembershipLeafData is the data of the unrelated leaf at the position
 	// of the key being proven, in the case of a non-membership proof. For
 	// membership proofs, is nil.
+	// In other words, if nonMembershipLeafData is not nil,
+	// then the proof must be a non-membership proof;
+	// otherwise the leaf at the position of the key being proven is a placeholder,
+	// or the proof is a membership proof.
 	NonMembershipLeafData []byte
 
 	// SiblingData is the data of the sibling node to the leaf being proven,
@@ -124,6 +128,10 @@ func verifyProofWithUpdates(proof SparseMerkleProof, root []byte, key []byte, va
 				// This is not an unrelated leaf; non-membership proof failed.
 				return false, nil
 			}
+			if !(countCommonPrefix(actualPath, path) >= len(proof.SideNodes)) {
+				return false, nil
+			}
+
 			currentHash, currentData = th.digestLeaf(actualPath, valueHash)
 
 			update := make([][]byte, 2)
